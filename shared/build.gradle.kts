@@ -26,6 +26,13 @@ kotlin {
     sourceSets {
         val commonMain by getting
         val commonTest by getting
+        // Create an intermediate iosMain source set so native-driver is visible to metadata compilation
+        val iosMain by creating {
+            dependsOn(commonMain)
+            dependencies {
+                implementation("com.squareup.sqldelight:native-driver:1.5.5")
+            }
+        }
 
         commonMain.dependencies {
             // SQLDelight common runtime
@@ -35,16 +42,11 @@ kotlin {
             implementation(libs.kotlin.test)
         }
 
-        // iOS target-specific SQLDelight native driver
         val iosArm64Main by getting {
-            dependencies {
-                implementation("com.squareup.sqldelight:native-driver:1.5.5")
-            }
+            dependsOn(iosMain)
         }
         val iosSimulatorArm64Main by getting {
-            dependencies {
-                implementation("com.squareup.sqldelight:native-driver:1.5.5")
-            }
+            dependsOn(iosMain)
         }
     }
 }
