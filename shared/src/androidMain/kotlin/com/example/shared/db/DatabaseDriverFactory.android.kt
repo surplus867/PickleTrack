@@ -1,5 +1,6 @@
 package com.example.shared.db
 
+import com.example.shared.db.PickleTrackDatabase
 import com.squareup.sqldelight.android.AndroidSqliteDriver
 import com.squareup.sqldelight.db.SqlDriver
 
