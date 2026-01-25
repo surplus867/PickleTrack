@@ -1,18 +1,17 @@
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
-    alias(libs.plugins.kotlinMultiplatform)
-    alias(libs.plugins.androidLibrary)
-    // SQLDelight Gradle plugin removed to avoid script compilation issues in this AGP/Kotlin setup.
+    id("org.jetbrains.kotlin.multiplatform")
+    id("com.android.library")
+    id("com.squareup.sqldelight")
 }
 
 kotlin {
-    // Configure the Android target with compiler options.
-    androidTarget {
-        compilerOptions {
-            jvmTarget.set(JvmTarget.JVM_11)
-        }
-    }
+    // Note: androidTarget() / android() APIs vary by Kotlin plugin version.
+    // To keep this script compatible across environments we avoid calling androidTarget()/android()
+    // directly and we don't reference `androidMain` here. Platform-specific drivers can be added
+    // in the Android module instead.
 
     listOf(
         iosArm64(),
@@ -27,18 +26,13 @@ kotlin {
     sourceSets {
         val commonMain by getting
         val commonTest by getting
-        val androidMain by getting
 
         commonMain.dependencies {
-            // SQLDelight common runtime (library only; SQLDelight Gradle plugin not applied)
+            // SQLDelight common runtime
             implementation("com.squareup.sqldelight:runtime:1.5.5")
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)
-        }
-        androidMain.dependencies {
-            // Android-specific SQLDelight driver
-            implementation("com.squareup.sqldelight:android-driver:1.5.5")
         }
 
         // iOS target-specific SQLDelight native driver
@@ -52,6 +46,21 @@ kotlin {
                 implementation("com.squareup.sqldelight:native-driver:1.5.5")
             }
         }
+    }
+}
+
+// Configure Kotlin compile tasks using kotlinOptions (compatible across plugin versions)
+tasks.withType(KotlinCompile::class.java).configureEach {
+    kotlinOptions {
+        freeCompilerArgs += listOf("-Xexpect-actual-classes")
+        jvmTarget = "11"
+    }
+}
+
+// SQLDelight configuration: generate PickleTrackDatabase in com.example.shared.db
+sqldelight {
+    database("PickleTrackDatabase") {
+        packageName = "com.example.shared.db"
     }
 }
 

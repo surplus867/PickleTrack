@@ -1,0 +1,47 @@
+-- SQLDelight schema for PickleTrack
+-- Placed under src/commonMain/sqldelight/com.example.shared.db/
+
+
+CREATE TABLE sessions (
+    id TEXT NOT NULL PRIMARY KEY,
+    dateMillis INTEGER NOT NULL,
+    durationMinutes INTEGER NOT NULL,
+    locataion TEXT,
+    notes TEXT
+);
+
+CREATE TABLE drills (
+    id TEXT NOT NULL PRIMARY KEY,
+    sessionId TEXT NOT NULL REFERENCES sessions(id) ON DELETE CASCADE,
+    name TEXT NOT NULL,
+    rating INTEGER NOT NULL,
+    notes TEXT
+);
+
+selectSessionById:
+SELECT * FROM sessions
+WHERE id = ?;
+
+insertSession:
+INSERT INTO sessions(id, dateMillis, durationMinutes, locataion, notes)
+VALUES (?, ?, ?, ?, ?);
+
+deleteSessionById:
+DELETE FROM sessions
+WHERE id = ?;
+
+selectDrillsForSession:
+DELETE FROM sessions
+WHERE id = ?;
+
+insertDrill:
+INSERT INTO drills(id, sessionId, name, rating, notes)
+VALUES (?, ?, ?, ?, ?);
+
+totalSessionsCount:
+SELECT COUNT(*) FROM sessions;
+
+totalMinutesInRange:
+SELECT COALESCE(SUM(durationMinutes), 0)
+FROM sessions
+WHERE dateMillis >= ? AND dateMillis < ?;
