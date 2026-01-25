@@ -23,7 +23,9 @@ kotlin {
     }
 
     sourceSets {
-        val commonMain by getting
+        val commonMain by getting {
+            kotlin.srcDir("$buildDir/generated/sqldelight/code/PickleTrackDatabase")
+        }
         val commonTest by getting
         // Create an intermediate iosMain source set so native-driver is visible to metadata compilation
         val iosMain by creating {

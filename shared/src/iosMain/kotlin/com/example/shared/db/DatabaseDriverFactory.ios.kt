@@ -5,6 +5,9 @@ import com.squareup.sqldelight.drivers.native.NativeSqliteDriver
 
 actual class DatabaseDriverFactory {
     actual fun createDriver(): SqlDriver {
-        return NativeSqliteDriver(PickleTrackDatabase.Schema, "pickTrack.db")
+        return NativeSqliteDriver(
+            schema = PickleTrackDatabase.Schema,
+            "pickTrack.db"
+        )
     }
 }
