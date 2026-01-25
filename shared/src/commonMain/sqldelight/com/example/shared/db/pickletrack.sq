@@ -1,12 +1,12 @@
 -- SQLDelight schema for PickleTrack
--- Placed under src/commonMain/sqldelight/com.example.shared.db/
+-- Placed under src/commonMain/sqldelight/com/example/shared/db/
 
 
 CREATE TABLE sessions (
     id TEXT NOT NULL PRIMARY KEY,
     dateMillis INTEGER NOT NULL,
     durationMinutes INTEGER NOT NULL,
-    locataion TEXT,
+    location TEXT,
     notes TEXT
 );
 
@@ -23,7 +23,7 @@ SELECT * FROM sessions
 WHERE id = ?;
 
 insertSession:
-INSERT INTO sessions(id, dateMillis, durationMinutes, locataion, notes)
+INSERT INTO sessions(id, dateMillis, durationMinutes, location, notes)
 VALUES (?, ?, ?, ?, ?);
 
 deleteSessionById:
@@ -31,8 +31,8 @@ DELETE FROM sessions
 WHERE id = ?;
 
 selectDrillsForSession:
-DELETE FROM sessions
-WHERE id = ?;
+SELECT * FROM drills
+WHERE sessionId = ?;
 
 insertDrill:
 INSERT INTO drills(id, sessionId, name, rating, notes)
