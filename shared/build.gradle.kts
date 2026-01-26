@@ -43,6 +43,8 @@ kotlin {
             implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.4")
             // SQLDelight coroutines extensions for Flow interop
             implementation("com.squareup.sqldelight:coroutines-extensions:1.5.5")
+            // KotlinX datetime for multiplatform date/time utilities
+            implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.4.0")
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)
