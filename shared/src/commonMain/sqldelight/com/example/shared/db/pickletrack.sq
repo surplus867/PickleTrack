@@ -18,6 +18,10 @@ CREATE TABLE drills (
     notes TEXT
 );
 
+selectAllSessions:
+SELECT * FROM sessions
+ORDER BY dateMillis DESC;
+
 selectSessionById:
 SELECT * FROM sessions
 WHERE id = ?;

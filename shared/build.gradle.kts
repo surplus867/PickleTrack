@@ -24,7 +24,8 @@ kotlin {
 
     sourceSets {
         val commonMain by getting {
-            kotlin.srcDir("$buildDir/generated/sqldelight/code/PickleTrackDatabase")
+            // Use the Gradle `layout.buildDirectory` API instead of the deprecated `buildDir` property
+            kotlin.srcDir(layout.buildDirectory.dir("generated/sqldelight/code/PickleTrackDatabase").get().asFile)
         }
         val commonTest by getting
         // Create an intermediate iosMain source set so native-driver is visible to metadata compilation
@@ -38,6 +39,10 @@ kotlin {
         commonMain.dependencies {
             // SQLDelight common runtime
             implementation("com.squareup.sqldelight:runtime:1.5.5")
+            // Coroutines common artifact for Kotlin multiplatform
+            implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.4")
+            // SQLDelight coroutines extensions for Flow interop
+            implementation("com.squareup.sqldelight:coroutines-extensions:1.5.5")
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)
