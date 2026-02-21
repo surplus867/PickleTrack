@@ -18,6 +18,9 @@ pluginManagement {
         id("com.squareup.sqldelight") version "1.5.5"
     }
 }
+plugins {
+    id("org.gradle.toolchains.foojay-resolver-convention") version "1.0.0"
+}
 
 dependencyResolutionManagement {
     repositories {
@@ -34,3 +37,4 @@ dependencyResolutionManagement {
 
 include(":composeApp")
 include(":shared")
+// include(":androidApp") // Unregistered: androidApp is not used in this project

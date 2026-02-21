@@ -27,18 +27,25 @@ kotlin {
     
     sourceSets {
         androidMain.dependencies {
-            implementation(compose.preview)
+            implementation("org.jetbrains.compose.ui:ui-tooling-preview:1.10.0")
             implementation(libs.androidx.activity.compose)
+            implementation(project(":shared"))
+            // Navigation for Compose
+            implementation("androidx.navigation:navigation-compose:2.5.3")
+            // Ensure Compose runtime is available on androidMain for @Composable/@Preview
+            implementation("org.jetbrains.compose.runtime:runtime:1.10.0")
         }
         commonMain.dependencies {
-            implementation(compose.runtime)
-            implementation(compose.foundation)
-            implementation(compose.material3)
-            implementation(compose.ui)
-            implementation(compose.components.resources)
-            implementation(compose.preview)
+            implementation("org.jetbrains.compose.runtime:runtime:1.10.0")
+            implementation("org.jetbrains.compose.foundation:foundation:1.10.0")
+            implementation("org.jetbrains.compose.material3:material3:1.9.0")
+            implementation("org.jetbrains.compose.ui:ui:1.10.0")
+            implementation("org.jetbrains.compose.components:components-resources:1.10.0")
+            implementation("org.jetbrains.compose.ui:ui-tooling-preview:1.10.0")
             implementation(libs.androidx.lifecycle.viewmodelCompose)
             implementation(libs.androidx.lifecycle.runtimeCompose)
+            implementation(project(":shared"))
+            // Navigation is Android-only; dependency is declared in androidMain above.
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)
@@ -76,4 +83,3 @@ android {
 dependencies {
     debugImplementation(compose.uiTooling)
 }
-

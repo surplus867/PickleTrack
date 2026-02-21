@@ -12,16 +12,6 @@ import com.example.shared.presentation.HomeViewModel
 import com.example.shared.presentation.SessionDetailViewModel
 import com.example.shared.db.PickleTrackDatabase
 
-/**
- * AppContainer is a simple dependency container.
- *
- * It:
- * - Creates and owns shared app dependencies.
- * - Wires repositories -> use cases -> view models
- * - Avoids using a DI framework (Koin/Hilt)
- *
- * One AppContainer instance is usually created at app startup.
- */
 class AppContainer(db: PickleTrackDatabase) {
 
     // Repository implementation backed by SQLDelight database
