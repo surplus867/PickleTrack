@@ -2,6 +2,13 @@ package com.example.pickletrack
 
 import android.content.Context
 import android.util.Log
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.SharingStarted
 
 // Runtime wrapper for com.example.shared.db.DatabaseFactory
 class DatabaseFactory(private val context: Context) {
@@ -61,17 +68,81 @@ class DatabaseProvider(private val factory: DatabaseFactory) {
     }
 }
 
+// Reflection helpers
+private fun callNoArgMethod(obj: Any?, vararg names: String): Any? {
+    if (obj == null) return null
+    for (n in names) {
+        try {
+            val m = obj.javaClass.methods.firstOrNull { it.name == n && it.parameterCount == 0 }
+            if (m != null) return m.invoke(obj)
+        } catch (_: Exception) {}
+    }
+    return null
+}
+
+private fun boolProp(obj: Any?, vararg names: String): Boolean {
+    val v = callNoArgMethod(obj, *names) ?: return false
+    return when (v) {
+        is Boolean -> v
+        else -> false
+    }
+}
+
+private fun longProp(obj: Any?, vararg names: String): Long {
+    val v = callNoArgMethod(obj, *names) ?: return 0L
+    return when (v) {
+        is Number -> v.toLong()
+        else -> 0L
+    }
+}
+
+private fun stringProp(obj: Any?, vararg names: String): String? {
+    val v = callNoArgMethod(obj, *names) ?: return null
+    return v as? String
+}
+
+private fun listProp(obj: Any?, vararg names: String): List<Any?> {
+    val v = callNoArgMethod(obj, *names) ?: return emptyList()
+    return (v as? List<*>) ?: emptyList()
+}
+
+private fun mapSharedStateToUi(obj: Any?): UiHomeState {
+    if (obj == null) return UiHomeState()
+    return try {
+        val isLoading = boolProp(obj, "isLoading", "getIsLoading")
+        val sessionsRaw = listProp(obj, "getSessions", "sessions")
+        val sessions = sessionsRaw.mapNotNull { item ->
+            if (item == null) return@mapNotNull null
+            val id = stringProp(item, "getId", "id") ?: return@mapNotNull null
+            val duration = (callNoArgMethod(item, "getDurationMinutes", "durationMinutes") as? Number)?.toInt() ?: 0
+            val location = stringProp(item, "getLocation", "location")
+            UiPracticeSession(id = id, durationMinutes = duration, location = location)
+        }
+        val minutesThisWeek = longProp(callNoArgMethod(obj, "getStats", "stats"), "getMinutesThisWeek", "minutesThisWeek")
+        val totalSessions = longProp(callNoArgMethod(obj, "getStats", "stats"), "getTotalSessions", "totalSessions")
+        val error = stringProp(obj, "getError", "error")
+        UiHomeState(
+            isLoading = isLoading,
+            sessions = sessions,
+            minutesThisWeek = minutesThisWeek,
+            totalSessions = totalSessions,
+            error = error
+        )
+    } catch (e: Exception) {
+        Log.w("SharedWrappers", "mapping shared state failed", e)
+        UiHomeState()
+    }
+}
+
 // Runtime wrapper for com.example.shared.AppContainer
 class AppContainer(private val provider: DatabaseProvider) {
     private val delegate: Any? = try {
-        // If provider.providerDb is a com.example.shared.db.PickleTrackDatabase instance, try to pass it
         val sharedContainerClass = Class.forName("com.example.shared.AppContainer")
         val dbInstance = provider.providerDb
         if (dbInstance != null) {
             try {
                 sharedContainerClass.getConstructor(dbInstance.javaClass).newInstance(dbInstance)
             } catch (e: Exception) {
-                // fallback to any single-arg constructor attempt
                 try {
                     val ctor = sharedContainerClass.constructors.firstOrNull { it.parameterTypes.size == 1 }
                     ctor?.newInstance(dbInstance)
@@ -81,7 +152,6 @@ class AppContainer(private val provider: DatabaseProvider) {
                 }
             }
         } else {
-            // try no-arg constructor
             try {
                 sharedContainerClass.getConstructor().newInstance()
             } catch (e: Exception) {
@@ -94,7 +164,6 @@ class AppContainer(private val provider: DatabaseProvider) {
         null
     }
 
-    // Expose a HomeViewModel adapter that delegates to shared homeViewModel instance if available
     fun homeViewModel(): HomeViewModel {
         val sharedVm = try {
             delegate?.javaClass?.getMethod("homeViewModel")?.invoke(delegate)
@@ -103,7 +172,31 @@ class AppContainer(private val provider: DatabaseProvider) {
             null
         }
 
+        // Try to read a StateFlow from the shared vm and map it to UiHomeState. If not available, use a fallback.
+        val stateFlow: StateFlow<UiHomeState> = try {
+            val stateObj = callNoArgMethod(sharedVm, "getState", "state")
+            if (stateObj != null) {
+                val stateInterface = Class.forName("kotlinx.coroutines.flow.StateFlow")
+                if (stateInterface.isInstance(stateObj)) {
+                    @Suppress("UNCHECKED_CAST")
+                    val sharedStateFlow = stateObj as kotlinx.coroutines.flow.StateFlow<Any?>
+                    val scope = CoroutineScope(Dispatchers.Main.immediate)
+                    sharedStateFlow.map { s -> mapSharedStateToUi(s) }
+                        .stateIn(scope, SharingStarted.Eagerly, UiHomeState())
+                } else {
+                    MutableStateFlow(UiHomeState())
+                }
+            } else {
+                MutableStateFlow(UiHomeState())
+            }
+        } catch (e: Exception) {
+            Log.w("SharedWrappers", "accessing sharedVm.state failed", e)
+            MutableStateFlow(UiHomeState())
+        }
+
         return object : HomeViewModel {
+            override val state: StateFlow<UiHomeState> = stateFlow
+
             override fun start() {
                 try {
                     sharedVm?.javaClass?.getMethod("start")?.invoke(sharedVm)
@@ -122,7 +215,6 @@ class AppContainer(private val provider: DatabaseProvider) {
         }
     }
 
-    // Expose an AddSessionViewModel adapter that delegates to shared addSessionViewModel instance if available
     fun addSessionViewModel(): AddSessionViewModel {
         val sharedVm = try {
             delegate?.javaClass?.getMethod("addSessionViewModel")?.invoke(delegate)
@@ -158,7 +250,6 @@ class AppContainer(private val provider: DatabaseProvider) {
         }
     }
 
-    // Expose a detail view model adapter; the shared container exposes detailViewModel(): SessionDetailViewModel
     fun detailViewModel(id: String): SessionDetailViewModel {
         val sharedVm = try {
             delegate?.javaClass?.getMethod("detailViewModel")?.invoke(delegate)

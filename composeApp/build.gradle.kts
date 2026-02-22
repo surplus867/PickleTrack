@@ -45,6 +45,8 @@ kotlin {
             implementation(libs.androidx.lifecycle.viewmodelCompose)
             implementation(libs.androidx.lifecycle.runtimeCompose)
             implementation(project(":shared"))
+            // Coroutine core for multiplatform so StateFlow is available
+            implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.4")
             // Navigation is Android-only; dependency is declared in androidMain above.
         }
         commonTest.dependencies {

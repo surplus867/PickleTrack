@@ -1,8 +1,12 @@
 package com.example.pickletrack
 
-// Common interface for simple ViewModel lifecycle used by the Android entrypoint.
-// Placing this in commonMain makes it visible to both UI (common) and platform adapters (androidMain).
+// Purpose: local ViewModel interfaces for the Compose UI so runtime adapters can provide shared ViewModels without a compile-time dependency.
+
+import kotlinx.coroutines.flow.StateFlow
+
+// Local ViewModel contracts used by the Compose app entrypoint.
 interface HomeViewModel {
+    val state: StateFlow<UiHomeState>
     fun start()
     fun clear()
 }
