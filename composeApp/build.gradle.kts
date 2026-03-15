@@ -14,7 +14,7 @@ kotlin {
             jvmTarget.set(JvmTarget.JVM_11)
         }
     }
-    
+
     listOf(
         iosArm64(),
         iosSimulatorArm64()
@@ -24,14 +24,13 @@ kotlin {
             isStatic = true
         }
     }
-    
+
     sourceSets {
         androidMain.dependencies {
             implementation("org.jetbrains.compose.ui:ui-tooling-preview:1.10.0")
             implementation(libs.androidx.activity.compose)
-            implementation(project(":shared"))
             // Navigation for Compose
-            implementation("androidx.navigation:navigation-compose:2.5.3")
+            implementation("androidx.navigation:navigation-compose:2.7.7")
             // Ensure Compose runtime is available on androidMain for @Composable/@Preview
             implementation("org.jetbrains.compose.runtime:runtime:1.10.0")
         }
@@ -44,10 +43,8 @@ kotlin {
             implementation("org.jetbrains.compose.ui:ui-tooling-preview:1.10.0")
             implementation(libs.androidx.lifecycle.viewmodelCompose)
             implementation(libs.androidx.lifecycle.runtimeCompose)
-            implementation(project(":shared"))
             // Coroutine core for multiplatform so StateFlow is available
-            implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.4")
-            // Navigation is Android-only; dependency is declared in androidMain above.
+            implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3")
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)

@@ -25,7 +25,9 @@ import androidx.compose.ui.unit.dp
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(vm: HomeViewModel, onAdd: () -> Unit, onOpen: (String) -> Unit) {
-    val state by vm.state.collectAsState()
+    // Provide an explicit initial value for collectAsState so the delegate has a proper State<T> backing
+    // in common multiplatform compilation contexts.
+    val state by vm.state.collectAsState(initial = UiHomeState())
 
     Scaffold(
         topBar = { TopAppBar(title = { Text("PickleTrack") }) },

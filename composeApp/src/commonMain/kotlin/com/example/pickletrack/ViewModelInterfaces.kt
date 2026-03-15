@@ -13,6 +13,13 @@ interface HomeViewModel {
 
 // AddSessionViewModel used by the Add screen; minimal contract required by MainActivity (clear on dispose).
 interface AddSessionViewModel {
+    val state: StateFlow<UiAddSessionState>
+    fun setLocation(v: String)
+    fun setDuration(minutes: Int)
+    fun setNotes(v: String)
+    fun addDrillRow()
+    fun updateDrillName(id: String, name: String)
+    fun updateDrillRating(id: String, rating: Int)
     fun save()
     fun reset()
     fun clear()

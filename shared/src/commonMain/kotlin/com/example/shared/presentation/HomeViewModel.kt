@@ -51,10 +51,15 @@ class HomeViewModel(
      * Call this when the screen is shown.
      */
     fun start() {
+        println("HomeViewModel: start() called")
         // Observe session list changes
         scope.launch {
+            println("HomeViewModel: Starting to observe sessions")
             observeSessions().collect { list ->
+                println("HomeViewModel: observeSessions emitted ${list.size} sessions")
                 _state.update { it.copy(isLoading = false, sessions = list, error = null) }
+                // Refresh stats whenever sessions change (e.g., after adding a new session)
+                refreshStats()
             }
         }
         // Load stats once on start
@@ -66,12 +71,16 @@ class HomeViewModel(
      */
     private fun refreshStats() {
         scope.launch {
+            println("HomeViewModel: refreshStats() called")
             runCatching {
                 val range = Time.currentWeekRange()
+                println("HomeViewModel: Getting stats for range ${range.startMillis} to ${range.endMillis}")
                 getStats(range.startMillis, range.endMillis)
             }.onSuccess { stats ->
+                println("HomeViewModel: Stats loaded - totalSessions=${stats.totalSessions}, minutesThisWeek=${stats.minutesThisWeek}")
                 _state.update { it.copy(stats = stats) }
             }.onFailure { e ->
+                println("HomeViewModel: Stats failed - ${e.message}")
                 _state.update { it.copy(error = e.message ?: "Unknown error") }
             }
         }
@@ -81,6 +90,7 @@ class HomeViewModel(
      * Clears coroutines when ViewModel is no longer needed.
      */
     fun clear() {
+        println("HomeViewModel: clear() called")
         scope.cancel()
     }
 }

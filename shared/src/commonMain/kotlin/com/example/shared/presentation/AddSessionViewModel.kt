@@ -108,14 +108,17 @@ class AddSessionViewModel(
      */
     fun save() {
         scope.launch {
+            println("AddSessionViewModel: save() started")
             val snapshot = _state.value
 
             // Only keep drills with a name
             val validDrills = snapshot.drills.filter { it.name.isNotBlank() }
             if (validDrills.isEmpty()) {
+                println("AddSessionViewModel: No valid drills found")
                 _state.update { it.copy(error = "Add at least one drill name") }
                 return@launch
             }
+            println("AddSessionViewModel: Saving ${validDrills.size} drills")
 
             // Show saving state
             _state.update { it.copy(saving = true, error = null) }
@@ -129,6 +132,7 @@ class AddSessionViewModel(
                 location = snapshot.location.takeIf { it.isNotBlank() },
                 notes = snapshot.notes.takeIf { it.isNotBlank() }
             )
+            println("AddSessionViewModel: Created session $sessionId with dateMillis=${snapshot.dateMillis}")
 
             // Convert drill drafts to domain models
             val drills = validDrills.map { d ->
@@ -142,9 +146,14 @@ class AddSessionViewModel(
             }
 
             // Persist session and drills
+            println("AddSessionViewModel: Calling addSession use case")
             runCatching { addSession(session, drills) }
-                .onSuccess { _state.update { it.copy(saving = false, saved = true) } }
+                .onSuccess { 
+                    println("AddSessionViewModel: Session saved successfully")
+                    _state.update { it.copy(saving = false, saved = true) } 
+                }
                 .onFailure { e ->
+                    println("AddSessionViewModel: Save failed - ${e.message}")
                     _state.update {
                         it.copy(
                             saving = false,

@@ -27,11 +27,9 @@ kotlin {
 
     sourceSets {
         val commonMain by getting {
-            // Use the Gradle `layout.buildDirectory` API instead of the deprecated `buildDir` property
             kotlin.srcDir(layout.buildDirectory.dir("generated/sqldelight/code/PickleTrackDatabase").get().asFile)
         }
         val commonTest by getting
-        // Create an intermediate iosMain source set so native-driver is visible to metadata compilation
         val iosMain by creating {
             dependsOn(commonMain)
             dependencies {
@@ -40,13 +38,9 @@ kotlin {
         }
 
         commonMain.dependencies {
-            // SQLDelight common runtime
             implementation("com.squareup.sqldelight:runtime:1.5.5")
-            // Coroutines common artifact for Kotlin multiplatform
             implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.4")
-            // SQLDelight coroutines extensions for Flow interop
             implementation("com.squareup.sqldelight:coroutines-extensions:1.5.5")
-            // KotlinX datetime for multiplatform date/time utilities
             implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.4.0")
         }
         commonTest.dependencies {
@@ -78,7 +72,7 @@ tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile::class.java).conf
                     val current = freeArgsGetter?.invoke(compilerOptions) as? MutableList<String>
                     val args = current ?: ArrayList<String>()
                     if (!args.contains("-Xexpect-actual-classes")) args.add("-Xexpect-actual-classes")
-                    if (freeArgsSetter != null) freeArgsSetter.invoke(compilerOptions, args)
+                    freeArgsSetter?.invoke(compilerOptions, args)
                 }
                 // Try to set jvmTarget
                 runCatching {
@@ -96,11 +90,11 @@ tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile::class.java).conf
                         val current = freeArgsGetter?.invoke(kotlinOptions) as? MutableList<String>
                         val args = current ?: ArrayList<String>()
                         if (!args.contains("-Xexpect-actual-classes")) args.add("-Xexpect-actual-classes")
-                        if (freeArgsSetter != null) freeArgsSetter.invoke(kotlinOptions, args)
+                        freeArgsSetter?.invoke(kotlinOptions, args)
                     }
                     runCatching {
                         val setJvm = kotlinOptions.javaClass.methods.firstOrNull { it.name == "setJvmTarget" && it.parameterCount == 1 }
-                        if (setJvm != null) setJvm.invoke(kotlinOptions, "11")
+                        setJvm?.invoke(kotlinOptions, "11")
                     }
                 }
             }
